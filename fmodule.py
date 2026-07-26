@@ -181,7 +181,8 @@ def frecuency_histogram(file):
     del alfabeto (a-z) en el texto.
 
     Muestra la distribucion de caracteres para identificar patrones
-    como las letras mas usadas en el idioma del texto.
+    como las letras mas usadas en el idioma del texto. Los valores
+    numericos se imprimen en consola para debug.
 
     Args:
         file (str): Texto normalizado.
@@ -197,6 +198,12 @@ def frecuency_histogram(file):
             freq[char] = freq.get(char, 0) + 1
     freq = dict(sorted(freq.items(), key=lambda item: item[1], reverse=True))
 
+    # Salida en consola para debug
+    print('\n\tFrecuencia de letras:')
+    for letra, count in freq.items():
+        bar = '█' * max(1, count // 10)
+        print(f'\t  {letra}: {count:5d} {bar}')
+
     plt.figure(figsize=(8, 5))
     plt.bar(freq.keys(), freq.values())
     plt.title('Histograma de frecuencia de caracteres')
@@ -211,6 +218,7 @@ def histogram_wordslen(file):
     """
     Genera un histograma con la longitud de las 50 palabras mas largas
     del texto. Permite identificar la complejidad lexica de la obra.
+    Los valores numericos se imprimen en consola para debug.
 
     Args:
         file (str): Texto normalizado.
@@ -226,6 +234,12 @@ def histogram_wordslen(file):
     word_lengths = dict(
         sorted(word_lengths.items(), key=lambda item: item[1], reverse=True)[:50]
     )
+
+    # Salida en consola para debug
+    print('\n\tLongitud de las 50 palabras mas largas:')
+    for word, length in word_lengths.items():
+        bar = '█' * min(length, 40)
+        print(f'\t  {word[:25]:25s} {length:2d} {bar}')
 
     plt.figure(figsize=(10, 5))
     plt.bar(word_lengths.keys(), word_lengths.values())
