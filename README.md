@@ -1,6 +1,6 @@
 # Text Analyzer NLP
 
-A text analysis tool for literary works that performs natural language processing using spaCy, stopwords removal, and statistical analysis. Originally developed as a university project for the subject "Programacion" at Universidad Distrital Francisco Jose de Caldas, and later enhanced with production-grade improvements.
+A text analysis tool for literary works that performs natural language processing using spaCy, stopwords removal, and statistical analysis. Originally developed as a university project for the course "Programacion" at Universidad Distrital Francisco Jose de Caldas, later revised with additional analysis features and bug fixes.
 
 ## Features
 

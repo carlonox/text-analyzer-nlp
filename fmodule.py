@@ -1,15 +1,15 @@
 """
-Modulo de analisis de texto con procesamiento de lenguaje natural.
+Text analysis module with natural language processing.
 
-Proporciona funciones para normalizacion, analisis estadistico,
-deteccion de idioma, reconocimiento de entidades y visualizacion
-de textos literarios. Disenado originalmente como proyecto universitario
-para la materia Programacion en la Universidad Distrital FJC.
+Provides functions for normalization, statistical analysis,
+language detection, entity recognition, and visualization
+of literary texts. Originally designed as a university project
+for the Programming course at Universidad Distrital FJC.
 
-Dependencias:
-    - matplotlib: generacion de histogramas
-    - stopwordsiso: filtrado de palabras vacias multilingue
-    - spacy: modelo de lenguaje para NER (Named Entity Recognition)
+Dependencies:
+    - matplotlib: histogram generation
+    - stopwordsiso: multilingual stopword filtering
+    - spacy: language model for NER (Named Entity Recognition)
 """
 import matplotlib.pyplot as plt
 import stopwordsiso as stp
@@ -19,8 +19,8 @@ import re
 
 from unicodedata import normalize
 
-# Palabras comunes por idioma para deteccion basica.
-# Se usa como fallback cuando no se dispone de langdetect.
+# Common words per language for basic detection.
+# Used as a fallback when langdetect is not available.
 LANGUAGE_MARKERS = {
     'es': {'el', 'la', 'los', 'las', 'de', 'que', 'y', 'a', 'en', 'un', 'una', 'por', 'con', 'para', 'es', 'su'},
     'en': {'the', 'and', 'of', 'to', 'in', 'is', 'that', 'it', 'for', 'with', 'on', 'are', 'be', 'was', 'by'},
@@ -29,26 +29,26 @@ LANGUAGE_MARKERS = {
     'de': {'der', 'die', 'das', 'und', 'ist', 'von', 'mit', 'auf', 'fur', 'den', 'dem', 'ein', 'eine'},
 }
 
-# Cache del modelo de spaCy para evitar recargarlo en cada llamada
+# spaCy model cache to avoid reloading it on every call
 _nlp_cache = {}
 
 
 def _clean_gutenberg_header(text):
     """
-    Elimina el encabezado de licencia de Project Gutenberg.
+    Removes the Project Gutenberg license header.
 
-    Los textos de Project Gutenberg incluyen un bloque legal extenso
-    antes del contenido literario. Este bloque interfiere con el analisis
-    porque introduce entidades (Gutenberg, License, Foundation, etc.)
-    que no pertenecen a la obra. La funcion detecta el inicio del texto
-    literario mediante la marca 'START OF' y descarta todo lo anterior.
+    Project Gutenberg texts include an extensive legal block before the
+    literary content. This block interferes with the analysis because it
+    introduces entities (Gutenberg, License, Foundation, etc.) that do not
+    belong to the work. The function detects the start of the literary text
+    via the 'START OF' marker and discards everything before it.
 
     Args:
-        text (str): Texto completo incluyendo el encabezado.
+        text (str): Full text including the header.
 
     Returns:
-        str: Texto a partir del inicio de la obra, o el texto original
-             si no se encuentra la marca de inicio.
+        str: Text starting at the beginning of the work, or the original
+             text if the start marker is not found.
     """
     start_marker = re.search(
         r'\*\*\* START OF (THIS|THE) (PROJECT|GUTENBERG).*?\*\*\*',
@@ -62,17 +62,17 @@ def _clean_gutenberg_header(text):
 
 def _clean_gutenberg_footer(text):
     """
-    Elimina el pie de pagina de Project Gutenberg.
+    Removes the Project Gutenberg footer.
 
-    Similar al encabezado, el pie contiene informacion de licencia
-    que no forma parte de la obra literaria.
+    Like the header, the footer contains licensing information that is
+    not part of the literary work.
 
     Args:
-        text (str): Texto completo incluyendo el pie.
+        text (str): Full text including the footer.
 
     Returns:
-        str: Texto hasta antes de la marca de fin, o el texto original
-             si no se encuentra la marca.
+        str: Text up to (but not including) the end marker, or the
+             original text if the marker is not found.
     """
     end_marker = re.search(
         r'\*\*\* END OF (THIS|THE) (PROJECT|GUTENBERG).*?\*\*\*',
@@ -86,39 +86,40 @@ def _clean_gutenberg_footer(text):
 
 def preprocess_text(text):
     """
-    Preprocesa el texto eliminando encabezados de licencia y caracteres especiales.
+    Preprocesses the text by removing license headers and special
+    characters.
 
-    Realiza tres operaciones en orden:
-    1. Elimina el encabezado de Project Gutenberg
-    2. Elimina el pie de pagina de Project Gutenberg
-    3. Elimina simbolos especiales (marcas registradas, copyright, etc.)
+    Performs three operations in order:
+    1. Removes the Project Gutenberg header
+    2. Removes the Project Gutenberg footer
+    3. Removes special symbols (trademarks, copyright, etc.)
 
     Args:
-        text (str): Texto crudo de entrada.
+        text (str): Raw input text.
 
     Returns:
-        str: Texto limpio listo para analisis.
+        str: Clean text ready for analysis.
     """
     text = _clean_gutenberg_header(text)
     text = _clean_gutenberg_footer(text)
-    # Eliminar simbolos especiales comunes (TM, (R), (C), etc.)
+    # Remove common special symbols (TM, (R), (C), etc.)
     text = re.sub(r'[\u2122\u00ae\u00a9\u2120\u00a7\u00b6]', '', text)
     return text
 
 
 def txt_normalized(file):
     """
-    Normaliza el texto eliminando acentos, signos de puntuacion y
-    caracteres especiales mediante descomposicion Unicode.
+    Normalizes the text by removing accents, punctuation marks, and
+    special characters through Unicode decomposition.
 
-    Se utiliza como preprocesamiento en la mayoria de las funciones
-    de analisis para garantizar consistencia en los resultados.
+    Used as preprocessing in most analysis functions to guarantee
+    consistent results.
 
     Args:
-        file (str): Texto a normalizar.
+        file (str): Text to normalize.
 
     Returns:
-        str: Texto normalizado sin acentos ni puntuacion.
+        str: Normalized text without accents or punctuation.
     """
     file = re.sub(
         r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+",
@@ -134,61 +135,61 @@ def txt_normalized(file):
 
 def txt_without_punctuation(file):
     """
-    Elimina solo los signos de puntuacion del texto.
+    Removes only the punctuation marks from the text.
 
-    A diferencia de txt_normalized, esta funcion conserva los acentos
-    y caracteres originales. Util en funciones donde se requiere
-    analisis sin alteracion del vocabulario.
+    Unlike txt_normalized, this function preserves accents and the
+    original characters. Useful in functions that require analysis
+    without altering the vocabulary.
 
     Args:
-        file (str): Texto de entrada.
+        file (str): Input text.
 
     Returns:
-        str: Texto sin signos de puntuacion.
+        str: Text without punctuation marks.
     """
     return file.translate(str.maketrans({key: None for key in string.punctuation}))
 
 
 def count_letters(file):
     """
-    Calcula el numero total de letras del texto, excluyendo espacios.
+    Computes the total number of letters in the text, excluding spaces.
 
     Args:
-        file (str): Texto previamente normalizado.
+        file (str): Previously normalized text.
 
     Returns:
-        int: Cantidad de caracteres alfabeticos en el texto.
+        int: Number of alphabetic characters in the text.
     """
     return len(file) - file.count(" ")
 
 
 def count_words(file):
     """
-    Calcula el numero total de palabras del texto.
+    Computes the total number of words in the text.
 
     Args:
-        file (str): Texto previamente normalizado.
+        file (str): Previously normalized text.
 
     Returns:
-        int: Cantidad de palabras.
+        int: Word count.
     """
     return len(file.split())
 
 
 def frecuency_histogram(file):
     """
-    Genera un histograma de barras con la frecuencia de cada letra
-    del alfabeto (a-z) en el texto.
+    Generates a bar histogram with the frequency of each letter of the
+    alphabet (a-z) in the text.
 
-    Muestra la distribucion de caracteres para identificar patrones
-    como las letras mas usadas en el idioma del texto. Los valores
-    numericos se imprimen en consola para debug.
+    Shows the character distribution to identify patterns such as the
+    most used letters in the language of the text. The numeric values
+    are printed to the console for debugging.
 
     Args:
-        file (str): Texto normalizado.
+        file (str): Normalized text.
 
     Returns:
-        str: Mensaje de confirmacion de generacion del histograma.
+        str: Confirmation message that the histogram was generated.
     """
     file = file.lower()
     alphabet = [chr(x) for x in range(97, 123)]
@@ -198,33 +199,33 @@ def frecuency_histogram(file):
             freq[char] = freq.get(char, 0) + 1
     freq = dict(sorted(freq.items(), key=lambda item: item[1], reverse=True))
 
-    # Salida en consola para debug
-    print('\n\tFrecuencia de letras:')
+    # Console output for debugging
+    print('\n\tLetter frequency:')
     for letra, count in freq.items():
         bar = '█' * max(1, count // 10)
         print(f'\t  {letra}: {count:5d} {bar}')
 
     plt.figure(figsize=(8, 5))
     plt.bar(freq.keys(), freq.values())
-    plt.title('Histograma de frecuencia de caracteres')
-    plt.xlabel('Caracteres')
-    plt.ylabel('Frecuencia')
+    plt.title('Character frequency histogram')
+    plt.xlabel('Characters')
+    plt.ylabel('Frequency')
     plt.tight_layout()
     plt.show()
-    return '\n\tHistograma generado.'
+    return '\n\tHistogram generated.'
 
 
 def histogram_wordslen(file):
     """
-    Genera un histograma con la longitud de las 50 palabras mas largas
-    del texto. Permite identificar la complejidad lexica de la obra.
-    Los valores numericos se imprimen en consola para debug.
+    Generates a histogram with the lengths of the 50 longest words in
+    the text. Helps identify the lexical complexity of the work.
+    The numeric values are printed to the console for debugging.
 
     Args:
-        file (str): Texto normalizado.
+        file (str): Normalized text.
 
     Returns:
-        str: Mensaje de confirmacion de generacion del histograma.
+        str: Confirmation message that the histogram was generated.
     """
     words = file.lower().split()
     word_lengths = {}
@@ -235,32 +236,32 @@ def histogram_wordslen(file):
         sorted(word_lengths.items(), key=lambda item: item[1], reverse=True)[:50]
     )
 
-    # Salida en consola para debug
-    print('\n\tLongitud de las 50 palabras mas largas:')
+    # Console output for debugging
+    print('\n\tLength of the 50 longest words:')
     for word, length in word_lengths.items():
         bar = '█' * min(length, 40)
         print(f'\t  {word[:25]:25s} {length:2d} {bar}')
 
     plt.figure(figsize=(10, 5))
     plt.bar(word_lengths.keys(), word_lengths.values())
-    plt.xlabel('Palabras')
-    plt.ylabel('Longitud')
-    plt.title('Longitud de las palabras en el texto')
+    plt.xlabel('Words')
+    plt.ylabel('Length')
+    plt.title('Word length distribution')
     plt.xticks(rotation=90)
     plt.tight_layout()
     plt.show()
-    return '\n\tHistograma generado.'
+    return '\n\tHistogram generated.'
 
 
 def frecuency_words(file):
     """
-    Obtiene las 100 palabras mas frecuentes en el texto.
+    Gets the 100 most frequent words in the text.
 
     Args:
-        file (str): Texto normalizado.
+        file (str): Normalized text.
 
     Returns:
-        str: Lista separada por comas de las 100 palabras mas frecuentes.
+        str: Comma-separated list of the 100 most frequent words.
     """
     words = file.lower().split()
     freq = {}
@@ -272,81 +273,81 @@ def frecuency_words(file):
 
 def diferent_words(file):
     """
-    Calcula la cantidad de palabras distintas en el texto.
-    Tambien conocido como vocabulario unico o riqueza lexica.
+    Computes the number of distinct words in the text.
+    Also known as unique vocabulary or lexical richness.
 
     Args:
-        file (str): Texto normalizado.
+        file (str): Normalized text.
 
     Returns:
-        int: Numero de palabras unicas en el texto.
+        int: Number of unique words in the text.
     """
     return len(set(file.lower().split()))
 
 
 def identify_language(text):
     """
-    Detecta el idioma del texto mediante comparacion de frecuencia
-    de palabras comunes.
+    Detects the language of the text by comparing the frequency of
+    common words.
 
-    Compara la presencia de palabras caracteristicas de cada idioma
-    soportado (espanol, ingles, frances, portugues, aleman) y
-    selecciona el que tenga mayor coincidencia.
+    Compares the presence of characteristic words from each supported
+    language (Spanish, English, French, Portuguese, German) and selects
+    the one with the highest match count.
 
     Args:
-        text (str): Texto de entrada.
+        text (str): Input text.
 
     Returns:
-        str: Nombre del idioma detectado en espanol, o 'Not available'
-             si no se pudo determinar.
+        str: Name of the detected language, or 'Not available' if it
+             could not be determined.
     """
     words = text.lower().split()
     if not words:
-        return 'No disponible'
+        return 'Not available'
 
     scores = {}
     for lang, markers in LANGUAGE_MARKERS.items():
         scores[lang] = sum(1 for w in words if w in markers)
 
     if not scores:
-        return 'No disponible'
+        return 'Not available'
 
     max_score = max(scores.values())
     if max_score == 0:
-        return 'No disponible'
+        return 'Not available'
 
     detected = max(scores, key=scores.get)
 
     lang_map = {
-        'es': 'Espanol',
-        'en': 'Ingles',
-        'fr': 'Frances',
-        'pt': 'Portugues',
-        'de': 'Aleman'
+        'es': 'Spanish',
+        'en': 'English',
+        'fr': 'French',
+        'pt': 'Portuguese',
+        'de': 'German'
     }
-    # Confianza basica: si el score es menor a 0.5% del texto
-    # probablemente la deteccion no es confiable
+    # Basic confidence check: if the score is below 0.5% of the text,
+    # the detection is probably not reliable
     confidence = max_score / len(words)
     if confidence < 0.005:
-        return 'No disponible'
+        return 'Not available'
 
-    return lang_map.get(detected, 'No disponible')
+    return lang_map.get(detected, 'Not available')
 
 
 def frecuency_nonstopwords(file):
     """
-    Obtiene las 50 palabras mas frecuentes del texto excluyendo
-    stopwords (palabras vacias) en cinco idiomas.
+    Gets the 50 most frequent words in the text, excluding stopwords
+    in five languages.
 
-    Las stopwords son palabras funcionales (articulos, preposiciones,
-    conjunciones) que aparecen con frecuencia pero aportan poco
-    significado. Al eliminarlas, se revelan las palabras tematicas.
+    Stopwords are function words (articles, prepositions, conjunctions)
+    that appear frequently but carry little meaning. Removing them
+    reveals the topic words.
 
     Args:
-        file (str): Texto normalizado sin puntuacion.
+        file (str): Normalized text without punctuation.
 
     Returns:
-        str: Lista separada por comas de las 50 palabras mas relevantes.
+        str: Comma-separated list of the 50 most relevant words.
     """
     stopwords = stp.stopwords(['en', 'es', 'fr', 'pt', 'de'])
     words = file.lower().split()
@@ -360,22 +361,22 @@ def frecuency_nonstopwords(file):
 
 def _get_nlp_model(text):
     """
-    Carga y retorna el modelo de spaCy adecuado segun el idioma del texto.
+    Loads and returns the spaCy model that matches the text language.
 
-    Los modelos se cachean en la variable global _nlp_cache para evitar
-    recargarlos en llamadas consecutivas a funciones de NER.
+    Models are cached in the global _nlp_cache variable to avoid
+    reloading them on consecutive calls to the NER functions.
 
     Args:
-        text (str): Texto para determinar el idioma.
+        text (str): Text used to determine the language.
 
     Returns:
-        tuple: (modelo_nlp, idioma_detectado)
+        tuple: (nlp_model, detected_language)
     """
     language = identify_language(text)
     model_map = {
-        'Espanol': 'es_core_news_sm',
-        'Aleman': 'de_core_news_sm',
-        'Frances': 'fr_core_news_sm',
+        'Spanish': 'es_core_news_sm',
+        'German': 'de_core_news_sm',
+        'French': 'fr_core_news_sm',
     }
     model_name = model_map.get(language, 'en_core_web_sm')
 
@@ -387,23 +388,23 @@ def _get_nlp_model(text):
 
 def identify_characters(text):
     """
-    Identifica los personajes del texto usando reconocimiento de
-    entidades nombradas (NER) con spaCy.
+    Identifies the characters in the text using named entity
+    recognition (NER) with spaCy.
 
-    Procesa el texto con el modelo linguistico adecuado segun el
-    idioma detectado y extrae las entidades etiquetadas como PERSON.
-    Ignora menciones a 'Project Gutenberg' que son falsos positivos
-    del encabezado legal.
+    Processes the text with the appropriate language model for the
+    detected language and extracts the entities labeled as PERSON.
+    Ignores mentions of 'Project Gutenberg' that are false positives
+    from the legal header.
 
     Args:
-        text (str): Texto completo de la obra.
+        text (str): Full text of the work.
 
     Returns:
-        dict: Diccionario con nombres de personajes como claves y
-              su frecuencia de aparicion como valores, ordenado de
-              mayor a menor frecuencia.
+        dict: Dictionary with character names as keys and their
+              frequency of appearance as values, sorted from highest
+              to lowest frequency.
     """
-    # Aplicar preprocesamiento para limpiar encabezados de Gutenberg
+    # Apply preprocessing to clean Gutenberg headers
     cleaned_text = preprocess_text(text)
     cleaned_text = cleaned_text.replace("\n", " ")
 
@@ -430,13 +431,13 @@ def identify_characters(text):
 
 def principal_characters(text):
     """
-    Obtiene los 3 personajes mas mencionados en el texto.
+    Gets the 3 most mentioned characters in the text.
 
     Args:
-        text (str): Texto completo de la obra.
+        text (str): Full text of the work.
 
     Returns:
-        list: Lista de tuplas (nombre, frecuencia) de los 3 principales.
+        list: List of tuples (name, frequency) for the top 3.
     """
     characters = identify_characters(text)
     return list(characters.items())[:3]
@@ -444,19 +445,19 @@ def principal_characters(text):
 
 def places(text):
     """
-    Identifica lugares mencionados en el texto mediante NER con spaCy.
+    Identifies places mentioned in the text using spaCy NER.
 
-    A diferencia de la implementacion original que usaba mayusculas,
-    esta version utiliza el reconocimiento de entidades de spaCy
-    etiquetadas como GPE (Geopolitical Entity) o LOC (Location),
-    lo que reduce significativamente los falsos positivos.
+    Unlike the original implementation that used capitalization,
+    this version uses spaCy entity recognition labeled as GPE
+    (Geopolitical Entity) or LOC (Location), which significantly
+    reduces false positives.
 
     Args:
-        text (str): Texto completo de la obra.
+        text (str): Full text of the work.
 
     Returns:
-        list: Lista de lugares identificados, o mensaje si no se
-              encontraron.
+        list: List of identified places, or a message if none were
+              found.
     """
     cleaned_text = preprocess_text(text)
 
@@ -470,22 +471,21 @@ def places(text):
             locations.append(ent.text)
             seen.add(ent.text)
 
-    return locations[:50] if locations else 'No se encontraron lugares'
+    return locations[:50] if locations else 'No locations found'
 
 
 def temporality(file):
     """
-    Identifica la temporalidad de la obra.
+    Identifies the temporality of the work.
 
-    Pendiente de implementacion completa. La idea original era
-    clasificar la obra en: anterior a la edad contemporanea,
-    contemporanea, o futurista, mediante analisis del vocabulario
-    y referencias temporales.
+    Pending full implementation. The original idea was to classify the
+    work as: before the contemporary age, contemporary, or futuristic,
+    through analysis of the vocabulary and temporal references.
 
     Args:
-        file (str): Texto de la obra (no utilizado actualmente).
+        file (str): Text of the work (not currently used).
 
     Returns:
-        str: Mensaje indicando que la funcionalidad esta en desarrollo.
+        str: Message indicating that the functionality is in development.
     """
-    return 'No disponible'
+    return 'Not available'
