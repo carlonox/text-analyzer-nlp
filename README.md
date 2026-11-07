@@ -27,6 +27,11 @@ A text analysis tool for literary works that performs natural language processin
 - Letter frequency distribution histogram
 - Word length distribution histogram (top 50 longest words)
 
+![Letter frequency and word length histograms](docs/analysis.png)
+
+Both charts come from `proof_one.txt` with the default pipeline
+(`preprocess_text` -> `txt_normalized` -> histogram functions).
+
 ## Requirements
 
 - Python 3.7+
